@@ -59,7 +59,13 @@ class _TodoPageState extends State<TodoPage> {
   }
 
   Future<void> _requestNotificationPermissions() async {
-    await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
   }
 
   void _addTodo() async {
@@ -167,8 +173,7 @@ class _TodoPageState extends State<TodoPage> {
       body,
       scheduledTime,
       details,
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.dateAndTime,
     );
   }
