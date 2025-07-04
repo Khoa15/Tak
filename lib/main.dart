@@ -26,18 +26,36 @@ class TodoPage extends StatefulWidget {
   State<TodoPage> createState() => _TodoPageState();
 }
 
+class TodoItem {
+  String text;
+  DateTime? deadline;
+  TodoItem(this.text, {this.deadline});
+}
+
 class _TodoPageState extends State<TodoPage> {
-  final List<String> _todos = [];
+  final List<TodoItem> _todos = [];
   final TextEditingController _controller = TextEditingController();
 
-  void _addTodo() {
+  void _addTodo() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
+      DateTime? deadline = await _pickDeadline();
       setState(() {
-        _todos.add(text);
+        _todos.add(TodoItem(text, deadline: deadline));
         _controller.clear();
       });
     }
+  }
+
+  Future<DateTime?> _pickDeadline({DateTime? initialDate}) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? now,
+      firstDate: now,
+      lastDate: DateTime(now.year + 10),
+    );
+    return picked;
   }
 
 
@@ -47,8 +65,17 @@ class _TodoPageState extends State<TodoPage> {
     });
   }
 
+  void _setDeadline(int index) async {
+    DateTime? newDeadline = await _pickDeadline(initialDate: _todos[index].deadline);
+    if (newDeadline != null) {
+      setState(() {
+        _todos[index].deadline = newDeadline;
+      });
+    }
+  }
+
   void _editTodo(int index) async {
-    final TextEditingController editController = TextEditingController(text: _todos[index]);
+    final TextEditingController editController = TextEditingController(text: _todos[index].text);
     final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -73,7 +100,7 @@ class _TodoPageState extends State<TodoPage> {
     );
     if (result != null && result.isNotEmpty) {
       setState(() {
-        _todos[index] = result;
+        _todos[index].text = result;
       });
     }
   }
@@ -107,23 +134,34 @@ class _TodoPageState extends State<TodoPage> {
           Expanded(
             child: ListView.builder(
               itemCount: _todos.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(_todos[index]),
-                onTap: () => _editTodo(index),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _editTodo(index),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _removeTodo(index),
-                    ),
-                  ],
-                ),
-              ),
+              itemBuilder: (context, index) {
+                final todo = _todos[index];
+                return ListTile(
+                  title: Text(todo.text),
+                  subtitle: todo.deadline != null
+                      ? Text('Deadline: 	${todo.deadline!.toLocal().toString().split(' ')[0]}')
+                      : null,
+                  onTap: () => _editTodo(index),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.event),
+                        tooltip: 'Set deadline',
+                        onPressed: () => _setDeadline(index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () => _editTodo(index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () => _removeTodo(index),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
