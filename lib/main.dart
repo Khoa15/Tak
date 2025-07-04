@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
-void main() {
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  final InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      // Handle notification tap (optional)
+    },
+  );
   runApp(const TodoApp());
 }
 
@@ -35,6 +52,15 @@ class TodoItem {
 class _TodoPageState extends State<TodoPage> {
   final List<TodoItem> _todos = [];
   final TextEditingController _controller = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _requestNotificationPermissions();
+  }
+
+  Future<void> _requestNotificationPermissions() async {
+    await flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestPermission();
+  }
 
   void _addTodo() async {
     final text = _controller.text.trim();
@@ -44,6 +70,7 @@ class _TodoPageState extends State<TodoPage> {
         _todos.add(TodoItem(text, deadline: deadline));
         _controller.clear();
       });
+      _scheduleDailyNotification();
     }
   }
 
@@ -63,6 +90,7 @@ class _TodoPageState extends State<TodoPage> {
     setState(() {
       _todos.removeAt(index);
     });
+    _scheduleDailyNotification();
   }
 
   void _setDeadline(int index) async {
@@ -71,6 +99,7 @@ class _TodoPageState extends State<TodoPage> {
       setState(() {
         _todos[index].deadline = newDeadline;
       });
+      _scheduleDailyNotification();
     }
   }
 
@@ -102,7 +131,46 @@ class _TodoPageState extends State<TodoPage> {
       setState(() {
         _todos[index].text = result;
       });
+      _scheduleDailyNotification();
     }
+  }
+
+  Future<void> _scheduleDailyNotification() async {
+    // Cancel previous notification
+    await flutterLocalNotificationsPlugin.cancel(0);
+    // Find the earliest deadline for today or future
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final todosWithDeadline = _todos.where((t) => t.deadline != null && !t.deadline!.isBefore(today)).toList();
+    if (todosWithDeadline.isEmpty) return;
+    // Find the earliest deadline for today
+    final todayTodos = todosWithDeadline.where((t) => t.deadline!.year == now.year && t.deadline!.month == now.month && t.deadline!.day == now.day).toList();
+    if (todayTodos.isEmpty) return;
+    // Compose notification body
+    final body = todayTodos.length == 1
+        ? todayTodos.first.text
+        : 'You have ${todayTodos.length} todos due today!';
+    // Schedule notification for the soonest deadline today
+    final soonest = todayTodos.reduce((a, b) => a.deadline!.isBefore(b.deadline!) ? a : b);
+    final scheduledTime = tz.TZDateTime.from(soonest.deadline!, tz.local);
+    final androidDetails = AndroidNotificationDetails(
+      'todo_channel',
+      'Todo Deadlines',
+      channelDescription: 'Notifications for todo deadlines',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    final details = NotificationDetails(android: androidDetails);
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Todo Deadline',
+      body,
+      scheduledTime,
+      details,
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
   }
 
   @override
