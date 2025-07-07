@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/data/latest.dart' as tz;
-import 'package:timezone/timezone.dart' as tz;
+import 'package:tak/core/TodoProvider.dart';
+import 'package:tak/models/todo.dart';
+import 'notification_service.dart';
 
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  tz.initializeTimeZones();
-  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
-  final InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
-  await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings,
-    onDidReceiveNotificationResponse: (NotificationResponse response) {
-      // Handle notification tap (optional)
-    },
-  );
+  NotificationService().init();
+
+
   runApp(const TodoApp());
 }
 
@@ -43,40 +34,53 @@ class TodoPage extends StatefulWidget {
   State<TodoPage> createState() => _TodoPageState();
 }
 
-class TodoItem {
-  String text;
-  DateTime? deadline;
-  TodoItem(this.text, {this.deadline});
-}
-
 class _TodoPageState extends State<TodoPage> {
-  final List<TodoItem> _todos = [];
+  final List<Todo> _todos = [];
   final TextEditingController _controller = TextEditingController();
+  late TodoProvider _todoProvider;
   @override
   void initState() {
     super.initState();
-    _requestNotificationPermissions();
+    _initialize();
   }
 
-  Future<void> _requestNotificationPermissions() async {
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+  Future<void> _initialize() async {
+    NotificationService().isAndroidPermissionGranted();
+    NotificationService().requestPermissions();
+    _todoProvider = TodoProvider();
+    await _todoProvider.init();
+    _todoProvider.getAllTodos().then((todos) {
+      setState(() {
+        _todos.addAll(todos);
+      });
+    }).catchError((error) {
+      // Handle error if needed
+      print('Error fetching todos: $error');
+    });
+    // notificationService().requestPermissions();
   }
+
+
+
+
 
   void _addTodo() async {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       DateTime? deadline = await _pickDeadline();
-      setState(() {
-        _todos.add(TodoItem(text, deadline: deadline));
-        _controller.clear();
+      _todoProvider.insert(Todo(text: text, deadline: deadline)).then((todo) {
+        setState(() {
+          _todos.add(todo);
+          _controller.clear();
+        });
+        NotificationService().scheduleDailyNotification(
+          body: 'Todo: $text' + (deadline != null ? ' by ${deadline.toLocal().toString().split(' ')[0]}' : ''),
+          scheduledDateTime: deadline ?? DateTime.now().add(const Duration(days: 1)),
+        );
+      }).catchError((error) {
+        // Handle error if needed
+        print('Error adding todo: $error');
       });
-      _scheduleDailyNotification();
     }
   }
 
@@ -93,10 +97,15 @@ class _TodoPageState extends State<TodoPage> {
 
 
   void _removeTodo(int index) {
-    setState(() {
-      _todos.removeAt(index);
+    _todoProvider.delete(_todos[index].id!).then((_) {
+      setState(() {
+        _todos.removeAt(index);
+      });
+    }).catchError((error) {
+      // Handle error if needed
+      print('Error removing todo: $error');
     });
-    _scheduleDailyNotification();
+    
   }
 
   void _setDeadline(int index) async {
@@ -105,7 +114,10 @@ class _TodoPageState extends State<TodoPage> {
       setState(() {
         _todos[index].deadline = newDeadline;
       });
-      _scheduleDailyNotification();
+      NotificationService().scheduleDailyNotification(
+        body: 'Todo: ${_todos[index].text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
+        scheduledDateTime: newDeadline,
+      );
     }
   }
 
@@ -134,48 +146,20 @@ class _TodoPageState extends State<TodoPage> {
       ),
     );
     if (result != null && result.isNotEmpty) {
-      setState(() {
-        _todos[index].text = result;
+      _todoProvider.update(Todo(id: _todos[index].id, text: result, deadline: _todos[index].deadline)).then((_) {
+        // Update the todo in the list
+        setState(() {
+          _todos[index].text = result;
+        });
+        NotificationService().scheduleDailyNotification(
+          body: 'Todo: ${_todos[index].text}' + (_todos[index].deadline != null ? ' by ${_todos[index].deadline!.toLocal().toString().split(' ')[0]}' : ''),
+          scheduledDateTime: _todos[index].deadline ?? DateTime.now().add(const Duration(days: 1)),
+        );
+      }).catchError((error) {
+        // Handle error if needed
+        print('Error updating todo: $error');
       });
-      _scheduleDailyNotification();
     }
-  }
-
-  Future<void> _scheduleDailyNotification() async {
-    // Cancel previous notification
-    await flutterLocalNotificationsPlugin.cancel(0);
-    // Find the earliest deadline for today or future
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final todosWithDeadline = _todos.where((t) => t.deadline != null && !t.deadline!.isBefore(today)).toList();
-    if (todosWithDeadline.isEmpty) return;
-    // Find the earliest deadline for today
-    final todayTodos = todosWithDeadline.where((t) => t.deadline!.year == now.year && t.deadline!.month == now.month && t.deadline!.day == now.day).toList();
-    if (todayTodos.isEmpty) return;
-    // Compose notification body
-    final body = todayTodos.length == 1
-        ? todayTodos.first.text
-        : 'You have ${todayTodos.length} todos due today!';
-    // Schedule notification for the soonest deadline today
-    final soonest = todayTodos.reduce((a, b) => a.deadline!.isBefore(b.deadline!) ? a : b);
-    final scheduledTime = tz.TZDateTime.from(soonest.deadline!, tz.local);
-    final androidDetails = AndroidNotificationDetails(
-      'todo_channel',
-      'Todo Deadlines',
-      channelDescription: 'Notifications for todo deadlines',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    final details = NotificationDetails(android: androidDetails);
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'Todo Deadline',
-      body,
-      scheduledTime,
-      details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
-    );
   }
 
   @override
@@ -184,6 +168,14 @@ class _TodoPageState extends State<TodoPage> {
       appBar: AppBar(title: const Text('Todo List')),
       body: Column(
         children: [
+          // ElevatedButton(
+          //   onPressed: () async {
+          //     await NotificationService().showNotification(
+          //       body: 'All todos cleared',
+          //     );
+          //   },
+          //   child: const Text('Show Notification'),
+          // ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
