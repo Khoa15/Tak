@@ -106,5 +106,33 @@ class NotificationService {
       );
   }
 
-  
+  Future<void> cancelAllNotifications() async {
+    await plugin.cancelAll();
+  }
+
+  Future<void> scheduleWeeklyNotification({
+    int id = 0,
+    String title = "Tak",
+    required String body,
+    required DateTime scheduledDateTime,
+  }) async {
+    final scheduledTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
+    final androidDetails = AndroidNotificationDetails(
+      'todo_channel',
+      'Todo Deadlines',
+      channelDescription: 'Notifications for todo deadlines',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    final details = NotificationDetails(android: androidDetails);
+    await plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduledTime,
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    );
+  }  
 }

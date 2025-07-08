@@ -74,6 +74,7 @@ class _TodoPageState extends State<TodoPage> {
           _controller.clear();
         });
         NotificationService().scheduleDailyNotification(
+          id: todo.id!,
           body: 'Todo: $text' + (deadline != null ? ' by ${deadline.toLocal().toString().split(' ')[0]}' : ''),
           scheduledDateTime: deadline ?? DateTime.now().add(const Duration(days: 1)),
         );
@@ -98,6 +99,7 @@ class _TodoPageState extends State<TodoPage> {
 
   void _removeTodo(int index) {
     _todoProvider.delete(_todos[index].id!).then((_) {
+      NotificationService().cancelNotification(_todos[index].id!);
       setState(() {
         _todos.removeAt(index);
       });
@@ -115,6 +117,7 @@ class _TodoPageState extends State<TodoPage> {
         _todos[index].deadline = newDeadline;
       });
       NotificationService().scheduleDailyNotification(
+        id: _todos[index].id!,
         body: 'Todo: ${_todos[index].text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
         scheduledDateTime: newDeadline,
       );
@@ -152,6 +155,7 @@ class _TodoPageState extends State<TodoPage> {
           _todos[index].text = result;
         });
         NotificationService().scheduleDailyNotification(
+          id: _todos[index].id!,
           body: 'Todo: ${_todos[index].text}' + (_todos[index].deadline != null ? ' by ${_todos[index].deadline!.toLocal().toString().split(' ')[0]}' : ''),
           scheduledDateTime: _todos[index].deadline ?? DateTime.now().add(const Duration(days: 1)),
         );
