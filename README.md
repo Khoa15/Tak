@@ -1,6 +1,6 @@
 # tak
 
-A new Flutter project.
+A very simple task management likely google tasks but have statistics.
 
 ## Getting Started
 

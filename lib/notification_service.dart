@@ -16,9 +16,6 @@ class NotificationService {
     );
     await plugin.initialize(
       initializationSettings,
-      // onDidReceiveNotificationResponse: (NotificationResponse response) {
-      //   // Handle notification tap (optional)
-      // },
     );
   }
 
@@ -52,7 +49,7 @@ class NotificationService {
 
       final bool? grantedNotificationPermission =
           await androidImplementation?.requestNotificationsPermission();
-
+      
       print("Android notification permission granted: $grantedNotificationPermission");
     }
   }
@@ -83,7 +80,6 @@ class NotificationService {
       scheduledTime,
       details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      matchDateTimeComponents: DateTimeComponents.dateAndTime,
     );
   }
 
