@@ -1,5 +1,4 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:tak/models/todo.dart';
 
 class TodoProvider {
@@ -32,7 +31,7 @@ class TodoProvider {
         columns: [columnId, columnTitle],
         where: '$columnId = ?',
         whereArgs: [id]);
-    if (maps.length > 0) {
+    if (maps.isNotEmpty) {
       return Todo.fromMap(Map<String, Object?>.from(maps.first));
     }
     return null;
