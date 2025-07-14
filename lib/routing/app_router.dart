@@ -1,9 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tak/main.dart';
 import 'package:tak/ui/screens/timer/pomodoro_timer_screen.dart';
 import 'package:tak/ui/screens/todo/todo_screen.dart';
-import 'package:tak/widgets/tab_controller.dart';
+import 'package:tak/routing/tab_controller.dart';
 
 class Approuter {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');

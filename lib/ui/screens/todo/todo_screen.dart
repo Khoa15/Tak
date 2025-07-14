@@ -52,7 +52,7 @@ class _TodoScreenState extends State<TodoScreen> {
         NotificationService().scheduleDailyNotification(
           id: todo.id!,
           body: 'Todo: $text' + (deadline != null ? ' by ${deadline.toLocal().toString().split(' ')[0]}' : ''),
-          scheduledDateTime: deadline ?? DateTime.now().add(const Duration(days: 1)),
+          scheduledDateTime: deadline ?? DateTime.now().add(const Duration(days: 1, hours: 6)),
         );
       }).catchError((error) {
         // Handle error if needed
@@ -133,7 +133,7 @@ class _TodoScreenState extends State<TodoScreen> {
         NotificationService().scheduleDailyNotification(
           id: _todos[index].id!,
           body: 'Todo: ${_todos[index].text}' + (_todos[index].deadline != null ? ' by ${_todos[index].deadline!.toLocal().toString().split(' ')[0]}' : ''),
-          scheduledDateTime: _todos[index].deadline ?? DateTime.now().add(const Duration(days: 1)),
+          scheduledDateTime: _todos[index].deadline ?? DateTime.now().add(const Duration(days: 1, hours: 6)),
         );
       }).catchError((error) {
         // Handle error if needed
@@ -181,29 +181,33 @@ class _TodoScreenState extends State<TodoScreen> {
               itemCount: _todos.length,
               itemBuilder: (context, index) {
                 final todo = _todos[index];
-                return ListTile(
-                  title: Text(todo.text),
-                  subtitle: todo.deadline != null
-                      ? Text('Deadline: 	${todo.deadline!.toLocal().toString().split(' ')[0]}')
-                      : null,
-                  onTap: () => _editTodo(index),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.event),
-                        tooltip: 'Set deadline',
-                        onPressed: () => _setDeadline(index),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () => _editTodo(index),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () => _removeTodo(index),
-                      ),
-                    ],
+                return Dismissible(
+                  key: Key(todo.id.toString()),
+                  onDismissed: (direction) {
+                    _removeTodo(index);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${todo.text} dismissed')),
+                    );
+                  },
+                  background: Container(color: Colors.red),
+                  child: ListTile(
+                    title: Text(todo.text),
+                    subtitle: todo.deadline != null
+                        ? Text('Deadline: ${todo.deadline!.toLocal().toString().split(' ')[0]}')
+                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _editTodo(index),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.calendar_today),
+                          onPressed: () => _setDeadline(index),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
