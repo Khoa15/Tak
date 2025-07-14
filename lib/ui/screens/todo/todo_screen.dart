@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tak/core/TodoProvider.dart';
+import 'package:tak/core/todo_provider.dart';
 import 'package:tak/models/todo.dart';
+import 'package:tak/ui/screens/todo/todo_detail_screen.dart';
 import 'package:tak/utils/notification_service.dart';
 
 class TodoScreen extends StatefulWidget {
@@ -198,6 +199,14 @@ class _TodoScreenState extends State<TodoScreen> {
                   },
                   background: Container(color: Colors.red),
                   child: ListTile(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TodoDetailScreen(todo: todo),
+                        ),
+                      );
+                    },
                     title: Text(todo.text),
                     subtitle: todo.deadline != null
                         ? Text('Deadline: ${todo.deadline!.toLocal().toString().split(' ')[0]}')

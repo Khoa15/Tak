@@ -18,6 +18,14 @@ class TodoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       routerConfig: Approuter.router,
+      theme: ThemeData(
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: <TargetPlatform, PageTransitionsBuilder>{
+            TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+            // TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
+          },
+        ),
+      ),
     );
   }
 }
