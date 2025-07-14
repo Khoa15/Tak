@@ -53,10 +53,10 @@ class TodoProvider {
     if (db == null) {
       throw Exception("Database not initialized. Call init() first.");
     }
-    return await db!.query(tableTodo).then((List<Map<String, dynamic>> maps) {
+    return await db!.query(tableTodo, orderBy: '$columnId DESC').then((List<Map<String, dynamic>> maps) {
       return List.generate(maps.length, (i) {
         return Todo.fromMap(Map<String, Object?>.from(maps[i]));
-      }).sort((a, b) => b.id!.compareTo(a.id!));
+      });
     });
   }
 

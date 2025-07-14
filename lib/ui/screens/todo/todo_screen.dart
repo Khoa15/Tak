@@ -31,7 +31,7 @@ class _TodoScreenState extends State<TodoScreen> {
     _todoProvider
         .getAllTodos()
         .then((todos) {
-          if(todos.isEmpty) {
+          if(todos == null) {
             return;
           }
           setState(() {
