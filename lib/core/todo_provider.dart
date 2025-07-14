@@ -16,7 +16,8 @@ class TodoProvider {
                 create table $tableTodo ( 
                   $columnId integer primary key autoincrement, 
                   $columnTitle text not null,
-                  $columnDeadline date)
+                  $columnDeadline date,
+                  $columnIsDone integer not null default 0)
     ''');
     });
   }
@@ -55,7 +56,12 @@ class TodoProvider {
     return await db!.query(tableTodo).then((List<Map<String, dynamic>> maps) {
       return List.generate(maps.length, (i) {
         return Todo.fromMap(Map<String, Object?>.from(maps[i]));
-      });
+      }).sort((a, b) => b.id!.compareTo(a.id!));
     });
+  }
+
+  markTodoAsDone(int id, bool marking) async {
+    return await db!.update(tableTodo, {columnIsDone: (marking ? 1 : 0)},
+        where: '$columnId = ?', whereArgs: [id]);
   }
 }

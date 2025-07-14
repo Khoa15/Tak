@@ -2,11 +2,12 @@ final String tableTodo = 'todo';
 final String columnId = '_id';
 final String columnTitle = 'title';
 final String columnDeadline = 'deadline';
-
+final String columnIsDone = 'is_done';
 class Todo {
   int? id;
   String text;
   DateTime? deadline;
+  bool isDone = false;
 
   Map<String, Object?> toMap() {
     var map = <String, Object?>{
@@ -26,5 +27,6 @@ class Todo {
         text = map[columnTitle] as String,
         deadline = map[columnDeadline] != null
             ? DateTime.parse(map[columnDeadline] as String)
-            : null;
+            : null,
+        isDone = map[columnIsDone] == 1 ? true : false;
 }
