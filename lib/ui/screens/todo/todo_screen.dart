@@ -44,6 +44,13 @@ class _TodoScreenState extends State<TodoScreen> {
     final text = _controller.text.trim();
     if (text.isNotEmpty) {
       DateTime? deadline = await _pickDeadline();
+      if (deadline == null) {
+        // If the deadline is in the past, show an error
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Deadline cannot be in the past')),
+        // );
+        return;
+      }
       _todoProvider.insert(Todo(text: text, deadline: deadline)).then((todo) {
         setState(() {
           _todos.add(todo);
@@ -62,7 +69,7 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<DateTime?> _pickDeadline({DateTime? initialDate}) async {
-    final now = DateTime.now();
+    final now = DateTime.now().add(const Duration(days: 1));
     final picked = await showDatePicker(
       context: context,
       initialDate: initialDate ?? now,
@@ -186,7 +193,7 @@ class _TodoScreenState extends State<TodoScreen> {
                   onDismissed: (direction) {
                     _removeTodo(index);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('${todo.text} dismissed')),
+                      SnackBar(content: Text('${todo.text.length>=10?'${todo.text.substring(0, 10)}...':todo.text} is deleted')),
                     );
                   },
                   background: Container(color: Colors.red),
