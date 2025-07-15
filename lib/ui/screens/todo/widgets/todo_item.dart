@@ -29,20 +29,10 @@ class _TodoItemState extends State<TodoItem> {
         children: <Widget>[
           Checkbox(
             value: _todo.isDone,
-            onChanged: (bool? newValue) {
-              // onChanged(newValue!);
-              _todoProvider
-                  .markTodoAsDone(_todo.id!, newValue!)
-                  .then((_) {
-                    setState(() {
-                      _todo.isDone = newValue!;
-                    });
-                    NotificationService().cancelNotification(_todo.id!);
-                  })
-                  .catchError((error) {
-                    // Handle error if needed
-                    print('Error marking todo as done: $error');
-                  });
+            onChanged: (bool? value) {
+              if (value != null) {
+                _markAsDone(value);
+              }
             },
           ),
           Expanded(
@@ -166,10 +156,36 @@ class _TodoItemState extends State<TodoItem> {
       });
       NotificationService().scheduleDailyNotification(
         id: _todo.id!,
-        body:
-            'Todo: ${_todo.text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
+        body: 'Todo: ${_todo.text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
         scheduledDateTime: newDeadline,
       );
     }
+  }
+
+  void _markAsDone(bool isDone) {
+    _todoProvider
+        .markTodoAsDone(_todo.id!, isDone)
+        .then((_) {
+          NotificationService().cancelNotification(_todo.id!);
+          if (isDone == false) {
+            if (_todo.deadline!.compareTo(DateTime.now()) > 0) {
+              NotificationService().scheduleDailyNotification(
+                id: _todo.id!,
+                body: 'Todo: ${_todo.text} by ${_todo.deadline.toString().split(' ')[0]}',
+                scheduledDateTime: _todo.deadline ?? DateTime.now().add(const Duration(days: 1, hours: 6)),
+              );
+            }
+          }
+          setState(() {
+            _todo.isDone = isDone;
+          });
+          if (isDone) {
+            NotificationService().cancelNotification(_todo.id!);
+          }
+        })
+        .catchError((error) {
+          // Handle error if needed
+          print('Error marking todo as done: $error');
+        });
   }
 }

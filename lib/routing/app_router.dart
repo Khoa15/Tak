@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tak/ui/screens/statistics/statistics_screen.dart';
 import 'package:tak/ui/screens/timer/pomodoro_timer_screen.dart';
 import 'package:tak/ui/screens/todo/todo_screen.dart';
 import 'package:tak/routing/tab_controller.dart';
@@ -17,7 +18,7 @@ class Approuter {
             routes: [
               GoRoute(
                 path: '/',
-                builder: (context, state) => const TodoScreen(),
+                builder: (context, state) => TodoScreen(),
               ),
             ],
           ),
@@ -26,6 +27,14 @@ class Approuter {
               GoRoute(
                 path: '/pomodoro',
                 builder: (context, state) => const PomodoroTimer(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/statistics',
+                builder: (context, state) => StatisticsScreen(),
               ),
             ],
           ),

@@ -17,6 +17,7 @@ class TodoProvider {
                   $columnId integer primary key autoincrement, 
                   $columnTitle text not null,
                   $columnDeadline date,
+                  $columnCreatedAt date not null default current_timestamp,
                   $columnIsDone integer not null default 0)
     ''');
     });

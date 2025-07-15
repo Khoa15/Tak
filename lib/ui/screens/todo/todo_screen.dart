@@ -7,8 +7,8 @@ import 'package:tak/utils/notification_service.dart';
 import 'package:tak/utils/time.dart';
 
 class TodoScreen extends StatefulWidget {
-  const TodoScreen({super.key});
-
+  final TodoProvider todoProvider = TodoProvider();
+  
   @override
   State<TodoScreen> createState() => _TodoScreenState();
 }
@@ -16,7 +16,7 @@ class TodoScreen extends StatefulWidget {
 class _TodoScreenState extends State<TodoScreen> {
   final List<Todo> _todos = [];
   final TextEditingController _controller = TextEditingController();
-  late TodoProvider _todoProvider;
+  late final TodoProvider _todoProvider = widget.todoProvider;
   @override
   void initState() {
     super.initState();
@@ -24,9 +24,6 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   Future<void> _initialize() async {
-    NotificationService().isAndroidPermissionGranted();
-    NotificationService().requestPermissions();
-    _todoProvider = TodoProvider();
     await _todoProvider.init();
     _todoProvider
         .getAllTodos()
@@ -105,6 +102,7 @@ class _TodoScreenState extends State<TodoScreen> {
       setState(() {
         _todos[index].deadline = newDeadline;
       });
+      NotificationService().cancelNotification(_todos[index].id!);
       NotificationService().scheduleDailyNotification(
         id: _todos[index].id!,
         body:

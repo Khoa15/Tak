@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tak/ui/screens/statistics/statistics_screen.dart';
 import 'package:tak/ui/screens/todo/todo_screen.dart';
 import '../ui/screens/timer/pomodoro_timer_screen.dart';
 
@@ -12,13 +13,15 @@ class AppTabController extends StatefulWidget {
 class _AppTabControllerState extends State<AppTabController> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
-    const TodoScreen(),
+    TodoScreen(),
     const PomodoroTimer(),
+    StatisticsScreen(),
   ];
-  final List<String> _tabTitles = [
-    'Todos',
-    'Pomodoro',
-  ];
+  final Map<String, IconData> _tabIcons = {
+    'Todos': Icons.list,
+    'Pomodoro': Icons.timer,
+    'Statistics': Icons.bar_chart,
+  };
 
   void _onItemTapped(int index) {
     setState(() {
@@ -49,11 +52,9 @@ class _AppTabControllerState extends State<AppTabController> {
           ],
         ),
       bottomNavigationBar: BottomNavigationBar(
-        items: _tabTitles
+        items: _tabIcons.keys
             .map((title) => BottomNavigationBarItem(
-                  icon: Icon(
-                    title == 'Todos' ? Icons.list : Icons.timer,
-                  ),
+                  icon: Icon(_tabIcons[title]),
                   label: title,
                 ))
             .toList(),

@@ -3,6 +3,7 @@ final String columnId = '_id';
 final String columnTitle = 'title';
 final String columnDeadline = 'deadline';
 final String columnIsDone = 'is_done';
+final String columnCreatedAt = 'created_at';
 
 
 
@@ -11,6 +12,7 @@ class Todo {
   String text;
   DateTime? deadline;
   bool isDone = false;
+  DateTime? createdAt = DateTime.now();
 
   // Map<String, Object?> toMap() {
   //   var map = <String, Object?>{
@@ -32,7 +34,7 @@ class Todo {
     };
   }
 
-  Todo({this.id, required this.text, this.deadline, this.isDone = false});
+  Todo({this.id, required this.text, this.deadline, this.isDone = false, this.createdAt});
   // Todo({required this.text, this.deadline, this.id});
 
   Todo.fromMap(Map<String, Object?> map)

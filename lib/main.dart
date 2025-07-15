@@ -7,6 +7,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   NotificationService().init();
 
+  NotificationService().isAndroidPermissionGranted();
+  NotificationService().requestPermissions();
 
   runApp(const TodoApp());
 }
