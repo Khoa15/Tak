@@ -29,8 +29,9 @@ class Todo {
     return {
       columnId: id,
       columnTitle: text,
-      columnDeadline: deadline?.toIso8601String(), // Lưu DateTime dưới dạng String
-      columnIsDone: isDone ? 1 : 0, // Chuyển đổi bool thành int (1 hoặc 0)
+      columnDeadline: deadline?.toIso8601String(),
+      columnIsDone: isDone ? 1 : 0,
+      columnCreatedAt: DateTime.now().toIso8601String()
     };
   }
 
@@ -40,8 +41,7 @@ class Todo {
   Todo.fromMap(Map<String, Object?> map)
       : id = map[columnId] as int?,
         text = map[columnTitle] as String,
-        deadline = map[columnDeadline] != null
-            ? DateTime.parse(map[columnDeadline] as String)
-            : null,
-        isDone = map[columnIsDone] == 1 ? true : false;
+        deadline = map[columnDeadline] != null ? DateTime.parse(map[columnDeadline] as String): null,
+        isDone = map[columnIsDone] == 1 ? true : false,
+        createdAt = map[columnCreatedAt] != null ? DateTime.parse(map[columnCreatedAt] as String) : null;
 }

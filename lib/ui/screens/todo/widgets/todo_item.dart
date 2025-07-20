@@ -36,42 +36,42 @@ class _TodoItemState extends State<TodoItem> {
             },
           ),
           Expanded(
-            child: RichText(
-              text: TextSpan(
-                text: _todo.text,
-                style: _todo.isDone
-                    ? const TextStyle(
-                        decoration: TextDecoration.lineThrough,
-                        color: Colors.grey,
-                      )
-                    : const TextStyle(color: Colors.black),
-                recognizer: TapGestureRecognizer()
-                  ..onTap = () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TodoDetailScreen(todo: _todo),
-                      ),
-                    );
-                  },
+            child: GestureDetector(
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TodoDetailScreen(todo: _todo),
+                  ),
+                ),
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _todo.text,
+                    style: TextStyle(
+                      color: _todo.isDone ? Colors.grey[400] : Colors.black,
+                      decoration: _todo.isDone
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                      fontSize: 16,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    maxLines: 2,
+                  ),
+                  Text(
+                    _todo.deadline!.toLocal().toString().split(' ')[0],
+                    style: TextStyle(
+                      color: _todo.isDone ? Colors.grey[400] : Colors.black87,
+                      fontSize: 13
+                    ),
+                  ),
+                ],
               ),
             ),
-            //  ListTile(
-            //   title: Text(_todo.text),
-            //   subtitle: Text(_todo.deadline?.toLocal().toString().split(' ')[0] ?? 'No deadline set'),
-            //   // style: const TextStyle(
-            //   //   color: Colors.blueAccent,
-            //   //   decoration: TextDecoration.underline,
-            //   // ),
-            //   onTap: () {
-            //     Navigator.push(
-            //       context,
-            //       MaterialPageRoute(
-            //         builder: (context) => TodoDetailScreen(todo: _todo),
-            //       ),
-            //     );
-            //   },
-            // ),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -156,7 +156,8 @@ class _TodoItemState extends State<TodoItem> {
       });
       NotificationService().scheduleDailyNotification(
         id: _todo.id!,
-        body: 'Todo: ${_todo.text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
+        body:
+            'Todo: ${_todo.text} by ${newDeadline.toLocal().toString().split(' ')[0]}',
         scheduledDateTime: newDeadline,
       );
     }
@@ -171,8 +172,11 @@ class _TodoItemState extends State<TodoItem> {
             if (_todo.deadline!.compareTo(DateTime.now()) > 0) {
               NotificationService().scheduleDailyNotification(
                 id: _todo.id!,
-                body: 'Todo: ${_todo.text} by ${_todo.deadline.toString().split(' ')[0]}',
-                scheduledDateTime: _todo.deadline ?? DateTime.now().add(const Duration(days: 1, hours: 6)),
+                body:
+                    'Todo: ${_todo.text} by ${_todo.deadline.toString().split(' ')[0]}',
+                scheduledDateTime:
+                    _todo.deadline ??
+                    DateTime.now().add(const Duration(days: 1, hours: 6)),
               );
             }
           }

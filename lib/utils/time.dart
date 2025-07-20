@@ -11,6 +11,7 @@ class Time {
       initialDate: initialDate ?? now,
       firstDate: now,
       lastDate: DateTime(now.year + 10),
+      helpText: 'Chọn ngày hạn',
     );
     return picked;
   }

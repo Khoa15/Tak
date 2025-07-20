@@ -4,26 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:tak/core/todo_provider.dart';
 import 'package:tak/models/todo.dart';
 
-
-// List<Todo> mockTodos = [
-//   Todo(id: 1, text: 'Hoàn thành báo cáo', isDone: true, createdAt: DateTime(2025, 7, 14)), // Yesterday
-//   Todo(id: 2, text: 'Gọi điện cho khách hàng', isDone: false, createdAt: DateTime(2025, 7, 15)), // Today
-//   Todo(id: 3, text: 'Sửa lỗi ứng dụng', isDone: true, createdAt: DateTime(2025, 7, 10)), // Last week
-//   Todo(id: 4, text: 'Lên lịch họp', isDone: false, createdAt: DateTime(2025, 6, 20)), // Last month
-//   Todo(id: 5, text: 'Trả lời email', isDone: true, createdAt: DateTime(2025, 7, 15)), // Today
-//   Todo(id: 6, text: 'Tạo tài liệu hướng dẫn', isDone: false, createdAt: DateTime(2025, 5, 5)), // Q2
-//   Todo(id: 7, text: 'Tập thể dục', isDone: true, createdAt: DateTime(2024, 12, 1)), // Last year
-//   Todo(id: 8, text: 'Kiểm tra dự án mới', isDone: true, createdAt: DateTime(2025, 7, 15)), // Today
-//   Todo(id: 9, text: 'Gặp gỡ đối tác', isDone: false, createdAt: DateTime(2025, 7, 13)), // This week
-//   Todo(id: 10, text: 'Nộp thuế', isDone: true, createdAt: DateTime(2025, 3, 10)), // Q1
-// ];
-
-
 enum TimeFilter { today, week, month, quarter, year, all }
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
-
 
   @override
   State<StatisticsScreen> createState() => _StatisticsScreenState();
@@ -47,16 +31,20 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   void _initialize() async {
     await _todoProvider.init();
-    _todoProvider.getAllTodos().then((todos) {
-      if (todos != null) {
-        setState(() {
-          mockTodos = todos; // Cập nhật danh sách công việc từ cơ sở dữ liệu
-          _applyFilter(_selectedFilter); // Áp dụng bộ lọc ban đầu
+    _todoProvider
+        .getAllTodos()
+        .then((todos) {
+          if (todos != null) {
+            setState(() {
+              mockTodos =
+                  todos; // Cập nhật danh sách công việc từ cơ sở dữ liệu
+              _applyFilter(_selectedFilter); // Áp dụng bộ lọc ban đầu
+            });
+          }
+        })
+        .catchError((error) {
+          print('Error fetching todos: $error');
         });
-      }
-    }).catchError((error) {
-      print('Error fetching todos: $error');
-    });
   }
 
   void _applyFilter(TimeFilter filter) {
@@ -64,7 +52,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       _selectedFilter = filter;
       _filteredTodos = _getFilteredTodos(filter);
       _totalFilteredTodos = _filteredTodos.length;
-      _completedFilteredTodos = _filteredTodos.where((todo) => todo.isDone).length;
+      _completedFilteredTodos = _filteredTodos
+          .where((todo) => todo.isDone)
+          .length;
       _pendingFilteredTodos = _totalFilteredTodos - _completedFilteredTodos;
     });
   }
@@ -72,7 +62,14 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   List<Todo> _getFilteredTodos(TimeFilter filter) {
     final now = DateTime.now();
     DateTime startDate;
-    DateTime endDate = DateTime(now.year, now.month, now.day, 23, 59, 59); // Cuối ngày hiện tại
+    DateTime endDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      23,
+      59,
+      59,
+    ); // Cuối ngày hiện tại
 
     switch (filter) {
       case TimeFilter.today:
@@ -80,7 +77,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         break;
       case TimeFilter.week:
         // Lấy ngày đầu tiên của tuần (ví dụ: Thứ Hai)
-        startDate = now.subtract(Duration(days: now.weekday - 1)); // Lấy thứ 2 của tuần hiện tại
+        startDate = now.subtract(
+          Duration(days: now.weekday - 1),
+        ); // Lấy thứ 2 của tuần hiện tại
         startDate = DateTime(startDate.year, startDate.month, startDate.day);
         break;
       case TimeFilter.month:
@@ -100,36 +99,34 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     // Lọc các công việc được tạo trong khoảng thời gian đã chọn
     return mockTodos.where((todo) {
-      return todo.createdAt!.isAfter(startDate.subtract(const Duration(days: 1))) && // Bắt đầu từ 00:00:00 của startDate
-             todo.createdAt!.isBefore(endDate.add(const Duration(days: 1))); // Kết thúc ở 23:59:59 của endDate
+      return todo.createdAt!.isAfter(
+            startDate.subtract(const Duration(days: 1)),
+          ) && // Bắt đầu từ 00:00:00 của startDate
+          todo.createdAt!.isBefore(
+            endDate.add(const Duration(days: 1)),
+          ); // Kết thúc ở 23:59:59 của endDate
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Thống kê công việc'),
-        backgroundColor: Colors.blueAccent,
-      ),
-      body: SingleChildScrollView(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- Bộ lọc thời gian ---
             _buildTimeFilterButtons(),
             const SizedBox(height: 20),
 
-            // --- Phần Tổng quan/Số liệu tóm tắt ---
             _buildSummaryCard(),
             const SizedBox(height: 20),
 
-            // --- Phần Danh sách chi tiết các công việc đã lọc ---
-            Text(
-              'Các công việc trong khoảng thời gian đã chọn',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            // Text(
+            //   'Các công việc trong khoảng thời gian đã chọn',
+            //   style: Theme.of(context).textTheme.headlineSmall,
+            // ),
             const SizedBox(height: 10),
             _buildFilteredTodoList(),
           ],
@@ -145,8 +142,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Wrap(
-          spacing: 8.0, // Khoảng cách giữa các nút
-          runSpacing: 8.0, // Khoảng cách giữa các dòng nếu tràn
+          spacing: 8.0,
+          runSpacing: 8.0,
           children: TimeFilter.values.map((filter) {
             return ChoiceChip(
               label: Text(_getFilterLabel(filter)),
@@ -158,7 +155,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               },
               selectedColor: Colors.blueAccent,
               labelStyle: TextStyle(
-                color: _selectedFilter == filter ? Colors.white : Colors.black87,
+                color: _selectedFilter == filter
+                    ? Colors.white
+                    : Colors.black87,
               ),
               backgroundColor: Colors.grey[200],
             );
@@ -195,28 +194,50 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Thống kê theo ${_getFilterLabel(_selectedFilter)}',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-            ),
-            const Divider(),
+            // Text(
+            //   'Thống kê theo ${_getFilterLabel(_selectedFilter)}',
+            //   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey),
+            // ),
+            // const Divider(),
             _buildStatRow('Tổng số công việc:', '$_totalFilteredTodos'),
-            _buildStatRow('Đã hoàn thành:', '$_completedFilteredTodos', color: Colors.green),
-            _buildStatRow('Chưa hoàn thành:', '$_pendingFilteredTodos', color: Colors.orange),
+            _buildStatRow(
+              'Đã hoàn thành:',
+              '$_completedFilteredTodos',
+              color: Colors.green,
+            ),
+            _buildStatRow(
+              'Chưa hoàn thành:',
+              '$_pendingFilteredTodos',
+              color: Colors.orange,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatRow(String label, String value, {Color color = Colors.black87}) {
+  Widget _buildStatRow(
+    String label,
+    String value, {
+    Color color = Colors.black87,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16, color: Colors.black)),
-          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, color: Colors.black),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -237,12 +258,12 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }
 
     return Card(
-      elevation: 4,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       color: Colors.white,
       child: ListView.builder(
-        shrinkWrap: true, // Quan trọng: Để ListView chiếm đủ không gian cần thiết
-        physics: const NeverScrollableScrollPhysics(), // Không cho phép cuộn riêng
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: _filteredTodos.length,
         itemBuilder: (context, index) {
           final todo = _filteredTodos[index];
@@ -255,13 +276,49 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               todo.text,
               style: TextStyle(
                 decoration: todo.isDone ? TextDecoration.lineThrough : TextDecoration.none,
+                overflow: TextOverflow.ellipsis,
               ),
+              maxLines: 2,
             ),
             subtitle: Text('Tạo lúc: ${todo.createdAt.toString().split(' ')[0]}'),
           );
+          // Row(
+          //   children: <Widget>[
+          //     Icon(
+          //       _todo.isDone
+          //           ? Icons.check_circle
+          //           : Icons.radio_button_unchecked,
+          //       color: _todo.isDone ? Colors.green : Colors.orange,
+          //     ),
+          //     Expanded(
+          //       child: Column(
+          //         mainAxisSize: MainAxisSize.min,
+          //         mainAxisAlignment: MainAxisAlignment.start,
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         children: [
+          //           Text(
+          //             _todo.text,
+          //             style: TextStyle(
+          //               color: _todo.isDone ? Colors.grey[400] : Colors.black,
+          //               decoration: _todo.isDone
+          //                   ? TextDecoration.lineThrough
+          //                   : TextDecoration.none,
+          //             ),
+          //           ),
+          //           Text(
+          //             _todo.deadline!.toLocal().toString().split(' ')[0],
+          //             style: TextStyle(
+          //               color: _todo.isDone ? Colors.grey[400] : Colors.black,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ],
+          // );
+          
         },
       ),
     );
   }
-
 }

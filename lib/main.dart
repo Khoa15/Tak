@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:tak/routing/app_router.dart';
 import 'utils/notification_service.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   NotificationService().init();
@@ -24,7 +23,6 @@ class TodoApp extends StatelessWidget {
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: <TargetPlatform, PageTransitionsBuilder>{
             TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
-            // TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
           },
         ),
       ),

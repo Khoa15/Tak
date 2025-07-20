@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tak/core/todo_provider.dart';
 import 'package:tak/models/todo.dart';
-import 'package:tak/ui/screens/todo/todo_detail_screen.dart';
 import 'package:tak/ui/screens/todo/widgets/todo_item.dart';
 import 'package:tak/utils/notification_service.dart';
 import 'package:tak/utils/time.dart';
@@ -36,10 +35,8 @@ class _TodoScreenState extends State<TodoScreen> {
           });
         })
         .catchError((error) {
-          // Handle error if needed
           print('Error fetching todos: $error');
         });
-    // notificationService().requestPermissions();
   }
 
   void _addTodo() async {
@@ -72,7 +69,6 @@ class _TodoScreenState extends State<TodoScreen> {
             );
           })
           .catchError((error) {
-            // Handle error if needed
             print('Error adding todo: $error');
           });
     }
@@ -88,7 +84,6 @@ class _TodoScreenState extends State<TodoScreen> {
           });
         })
         .catchError((error) {
-          // Handle error if needed
           print('Error removing todo: $error');
         });
   }
@@ -118,14 +113,6 @@ class _TodoScreenState extends State<TodoScreen> {
       appBar: AppBar(title: const Text('Tak')),
       body: Column(
         children: [
-          // ElevatedButton(
-          //   onPressed: () async {
-          //     await NotificationService().showNotification(
-          //       body: 'All todos cleared',
-          //     );
-          //   },
-          //   child: const Text('Show Notification'),
-          // ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -133,7 +120,7 @@ class _TodoScreenState extends State<TodoScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(labelText: 'Add a todo'),
+                    decoration: const InputDecoration(labelText: 'Thêm việc'),
                     onSubmitted: (_) => _addTodo(),
                   ),
                 ),
@@ -160,33 +147,6 @@ class _TodoScreenState extends State<TodoScreen> {
                   },
                   background: Container(color: Colors.red),
                   child: TodoItem(todo: todo, todoProvider: _todoProvider),
-                  // ListTile(
-                  //   onTap: () {
-                  //     Navigator.push(
-                  //       context,
-                  //       MaterialPageRoute(
-                  //         builder: (context) => TodoDetailScreen(todo: todo),
-                  //       ),
-                  //     );
-                  //   },
-                  //   title: Text(todo.text),
-                  //   subtitle: todo.deadline != null
-                  //       ? Text('Deadline: ${todo.deadline!.toLocal().toString().split(' ')[0]}')
-                  //       : null,
-                  //   trailing: Row(
-                  //     mainAxisSize: MainAxisSize.min,
-                  //     children: [
-                  //       IconButton(
-                  //         icon: const Icon(Icons.edit),
-                  //         onPressed: () => _editTodo(index),
-                  //       ),
-                  //       IconButton(
-                  //         icon: const Icon(Icons.calendar_today),
-                  //         onPressed: () => _setDeadline(index),
-                  //       ),
-                  //     ],
-                  //   ),
-                  // ),
                 );
               },
             ),
